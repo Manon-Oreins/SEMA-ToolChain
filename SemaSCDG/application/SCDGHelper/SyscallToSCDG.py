@@ -59,6 +59,10 @@ class SyscallToSCDGBuilder:
         "SetDefaultDllDirectories": 0,
         "CreateProcessA": [0, 1],
         "URLDownloadToFileA": [1,2],
+        "printf":0,
+        "sprintf":0,
+        "strlen":0,
+        "puts":0,
         #"fputc": 0,
         #"send":
     }   # ,'RegCreateKeyW':1}

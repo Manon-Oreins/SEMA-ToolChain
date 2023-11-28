@@ -42,13 +42,17 @@ run-scdg-test:
 		-v $(PWD)/submodules/bingraphvis:/sema-scdg/application/submodules/bingraphvis \
 		-v $(PWD)/penv-fix/:/sema-scdg/application/penv-fix \
 		-v $(PWD)/database/:/sema-scdg/application/database\
+		-v $(PWD)/run_test.sh:/sema-scdg/application/run_test.sh \
 		-e DISPLAY=$(DISPLAY) \
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
-		-p 5001:5001 \
 		--net=micro_network\
 		--name="sema-scdg" \
-		sema-scdg python3 SCDGApp.py
+		sema-scdg bash run_test.sh
 
+run-toolchain-compose:
+	DOCKER_BUILDKIT=0 docker compose -f docker-compose.deploy.yml up
+
+# TODO better i think
 run-toolchain-compose:
 	DOCKER_BUILDKIT=0 docker compose -f docker-compose.deploy.yml up
 
