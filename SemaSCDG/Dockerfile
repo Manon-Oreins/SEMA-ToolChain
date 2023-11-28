@@ -37,7 +37,9 @@ RUN apt update; apt-get --fix-missing -y install \
                 libossp-uuid-dev \
                 freerdp2-dev \
                 libvirt-dev \
-                python3-wheel 
+                python3-wheel \ 
+                libcanberra-gtk-module \
+                libcanberra-gtk3-module
 
 # For Symbion
 RUN apt update; apt-get install --fix-missing -y  \
