@@ -47,7 +47,6 @@ run-scdg-service-pypy:
 		-v $(PWD)/submodules/bingraphvis:/sema-scdg/application/submodules/bingraphvis \
 		-v $(PWD)/penv-fix/:/sema-scdg/application/penv-fix \
 		-v $(PWD)/database/:/sema-scdg/application/database\
-		-v $(PWD)/run_test.sh:/sema-scdg/application/run_test.sh \
 		-e DISPLAY=$(DISPLAY) \
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
 		-p 5001:5001 \

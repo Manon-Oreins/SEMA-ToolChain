@@ -25,11 +25,15 @@ class SemaExplorer(ExplorationTechnique):
         exp_dir,
         nameFileShort,
         scdg_graph,
-        call_sim
+        call_sim,
+        config_file="config.ini"
     ):
         super(SemaExplorer, self).__init__()
 
         self.start_time = timer.time()
+        
+        config = configparser.ConfigParser()
+        config.read(config_file)
 
         self.memory_limit = config['explorer_arg'].getboolean('memory_limit')
         self.verbose = config['explorer_arg'].getboolean('verbose')

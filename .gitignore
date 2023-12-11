@@ -55,3 +55,13 @@ wl_model.pkl
 sema_webapp.egg-info
 # TODO dl link
 SemaSCDG/application/grid_search_angr_options.py
+./database/SCDG/runs/normal/linux/normal/scdg.ans
+./database/SCDG/runs/to_test/linux/to_test/scdg.ans
+./SemaSCDG/application/tests/reports/tests_reports/Linux test report_11-12-23 08-25-02.html
+./SemaSCDG/application/tests/reports/tests_reports/Linux test report_11-12-23 08-25-02_log.txt
+./.git/objects/pack/pack-0b6528cd449979891dfb2f441792140385be9295.pack
+./database/SCDG/runs/normal/linux/normal/scdg.ans
+./database/SCDG/runs/to_test/linux/to_test/scdg.ans
+./SemaSCDG/application/tests/reports/tests_reports/Linux test report_11-12-23 08-25-02.html
+./SemaSCDG/application/tests/reports/tests_reports/Linux test report_11-12-23 08-25-02_log.txt
+./.git/objects/pack/pack-0b6528cd449979891dfb2f441792140385be9295.pack

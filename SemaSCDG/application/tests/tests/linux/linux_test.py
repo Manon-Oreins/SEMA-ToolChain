@@ -1,20 +1,23 @@
 import unittest
-import os
 import json 
-import sys 
 from itertools import zip_longest
 import logging
 from parameterized import parameterized
-import glob 
 import networkx as nx
-import shutil
 import matplotlib.pyplot as plt
-# make run-test
-# pip install parameterized
+import sys 
+import shutil
+import os
+import coverage
+from pympler import muppy, summary, tracker
+from HTMLTestRunner import HTMLTestRunner
 
-from src.SemaSCDG.SemaSCDG import SemaSCDG
-from src.SemaSCDG.clogging.CustomFormatter import CustomFormatter
-from src.SemaSCDG.helper.ArgumentParserSCDG import ArgumentParserSCDG
+# TODO manon peut etre faire des tests de performance (temps, memoire, nombre d'address visité, syscalls rencontrés, etc) pour comparer les nouvelles versions de SEMA
+
+
+sys.path.insert(0, '/sema-scdg/application/')
+
+from SemaSCDG import SemaSCDG
     
 LOGGER = logging.getLogger("LinuxTest")
 LOGGER.setLevel(logging.INFO)
@@ -150,63 +153,96 @@ def remove_duplicates_traces(inputs):
 # TODO Use bigger example -> now maybe multiple parameters is useless
 
 class TestLinuxMethods(unittest.TestCase):
-    def assertSyscallsEqual(self, syscall1, syscall2):
-        with self.subTest(msg="Syscall - name"):
-            self.assertIn("name", syscall1)
-            self.assertIn("name", syscall2)
-            self.assertEqual(syscall1["name"], syscall2["name"])
+    def assertSyscallsEqual(self, expected_syscall, current_syscall, msg):
+        with self.subTest(msg=msg + "Syscall - name"):
+            # TODO instead of assertIn maybe check if the syscall is in the list of syscall
+            self.assertIn("name", expected_syscall, msg="expected_syscall[name]  not in " + str(expected_syscall))
+            self.assertIn("name", current_syscall, msg="current_syscall[name]  not in " + str(current_syscall))
+            self.assertEqual(expected_syscall["name"], current_syscall["name"], msg=expected_syscall["name"] +"!=" +current_syscall["name"])
 
-        with self.subTest(msg="Syscall - args"):
-            self.assertIn("args", syscall1)
-            self.assertIn("args", syscall2)
-            self.assertEqual(syscall1["args"], syscall2["args"])
+        with self.subTest(msg=msg + "Syscall - args"):
+            self.assertIn("args", expected_syscall, msg="expected_syscall[args]  not in " + str(expected_syscall))
+            self.assertIn("args", current_syscall, msg="current_syscall[args]  not in " + str(current_syscall))
+            self.assertListEqual(expected_syscall["args"], current_syscall["args"], msg=str(expected_syscall["args"]) +"!="+ str(current_syscall["args"]))
 
-        with self.subTest(msg="Syscall - addr_func"):
-            self.assertIn("addr_func", syscall1)
-            self.assertIn("addr_func", syscall2)
-            self.assertEqual(syscall1["addr_func"], syscall2["addr_func"])
+        with self.subTest(msg=msg + "Syscall - addr_func"):
+            self.assertIn("addr_func", expected_syscall, msg="expected_syscall[addr_func]  not in " + str(expected_syscall))
+            self.assertIn("addr_func", current_syscall, msg="current_syscall[addr_func]  not in " + str(current_syscall))
+            self.assertEqual(expected_syscall["addr_func"], current_syscall["addr_func"], msg=str(expected_syscall["addr_func"]) + "!=" + str(current_syscall["addr_func"]))
 
-        with self.subTest(msg="Syscall - addr"):
-            self.assertIn("addr", syscall1)
-            self.assertIn("addr", syscall2)
-            self.assertEqual(syscall1["addr"], syscall2["addr"])
+        with self.subTest(msg=msg + "Syscall - addr"):
+            self.assertIn("addr", expected_syscall, msg="expected_syscall[addr]  not in " + str(expected_syscall))
+            self.assertIn("addr", current_syscall, msg="current_syscall[addr]  not in " + str(current_syscall))
+            self.assertEqual(expected_syscall["addr"], current_syscall["addr"], msg=str(expected_syscall["addr"])+  "!=" +str(current_syscall["addr"]))
 
-        with self.subTest(msg="Syscall - ret"):
-            self.assertIn("ret", syscall1)
-            self.assertIn("ret", syscall2)
-            self.assertEqual(syscall1["ret"], syscall2["ret"])
+        with self.subTest(msg=msg + "Syscall - ret"):
+            self.assertIn("ret", expected_syscall, msg="expected_syscall[ret]  not in " + str(expected_syscall))
+            self.assertIn("ret", current_syscall, msg="current_syscall[ret]  not in " + str(current_syscall))
+            self.assertEqual(expected_syscall["ret"], current_syscall["ret"], msg=str(expected_syscall["ret"])+ "!=" +str(current_syscall["ret"]))
 
-    def assertTracesEqual(self, trace1, trace2):
-        if "sections" in trace1:
-            LOGGER.info("Sections are not compared")
-            return
-        
-        with self.subTest(msg="Trace - status"):
-            self.assertEqual(trace1["status"], trace2["status"])
+    def assertTracesEqual(self, expected_trace, current_trace, msg):        
+        with self.subTest(msg=msg + "Trace - status"):
+            self.assertIn("status", expected_trace, msg="expected_trace[status]  not in " + str(expected_trace))
+            self.assertIn("status", current_trace, msg="current_trace[status]  not in " + str(current_trace))
+            self.assertEqual(expected_trace["status"], current_trace["status"], msg=expected_trace["status"]+ "!="+ current_trace["status"])
 
         # Compare the length of the trace
-        with self.subTest(msg="Trace - length"):
-            self.assertEqual(len(trace1["trace"]), len(trace2["trace"]))
+        with self.subTest(msg=msg + "Trace - length"):
+            self.assertIn("trace", expected_trace, msg="expected_trace[trace]  not in " + str(expected_trace))
+            self.assertIn("trace", current_trace, msg="current_trace[trace]  not in " + str(current_trace))
+            self.assertEqual(len(expected_trace["trace"]), len(current_trace["trace"]), msg=str(len(expected_trace["trace"])) +"!="+ str(len(current_trace["trace"])))
 
-        # Iterate over each syscall in the traces and compare them
-        for i, (syscall1, syscall2) in enumerate(zip_longest(trace1["trace"], trace2["trace"], fillvalue={})):
-            with self.subTest(msg=f"Syscall {i}"):
-                self.assertSyscallsEqual(syscall1, syscall2)
-                            
+            # Iterate over each syscall in the traces and compare them
+            for i, (expected_syscall, current_syscall) in enumerate(zip_longest(expected_trace["trace"], current_trace["trace"], fillvalue=None)):
+                print("*"*20)
+                with self.subTest(msg=msg + f"Syscall {i}"):
+                    self.assertSyscallsEqual(expected_syscall, current_syscall , msg)
+                                           
     @parameterized.expand([
-        ("CDFS",         # Exploration technique used
+        # For local test testing :P
+        # ("normal",       # File name
+        #  "linux",        # Folder name
+        #  "CDFS",         # Exploration technique used
+        #  [1],          # Number of active stashes used
+        #  [50],       # Timeout used
+        #  [1000]   # Max steps per execution
+        #  ), 
+        
+       ("normal",        # File name
+         "linux",        # Folder name
+         "CDFS",         # Exploration technique used
          [1,5],          # Number of active stashes used
          [50,300],       # Timeout used
          [1000, 10000]   # Max steps per execution
          ), 
         
-        ("CBFS", 
+        ("normal",
+         "linux",
+         "CBFS", 
          [1,5],         
          [50,300],       
          [1000, 10000]
          ),  
+        
+        ("crypto",
+         "linux",
+         "CDFS",         
+         [1,5],          
+         [50,300,3000],      
+         [100000]  
+         ), 
+        
+        ("crypto",
+         "linux",
+         "CBFS", 
+         [1,5],         
+         [50,300,3000],       
+         [100000]
+         ),  
     ])
     def test_linux_trace(self, 
+                        file,
+                        folder,
                         exploration_tech,
                         max_active_stashes, 
                         timeout, 
@@ -228,53 +264,81 @@ class TestLinuxMethods(unittest.TestCase):
         # os.chdir(os.getcwd()+"/tests")
         # os.system("make all")
         # os.chdir(root_dir)
+        
+        # TODO copy the mapping file at some points, use a new one ? use the one for the expected ouputs
                  
         for active_stash in max_active_stashes:
             for time in timeout:
                 for steps in max_steps:
                     LOGGER.info("*"*20)
-                    LOGGER.info("TestLinuxMethods - test_linux_trace")
+                    LOGGER.info("TestLinuxMethods - test_linux_trace for " + file)
                     LOGGER.info("Exploration technique: " + exploration_tech)
                     LOGGER.info("Active stash: " + str(active_stash))
                     LOGGER.info("Timeout: " + str(time))
                     LOGGER.info("Max steps: " + str(steps))
                     
                     tool_scdg = SemaSCDG(
-                        print_sm_step=True,
-                        print_syscall=True,
-                        debug_error=True,
-                        debug_string=True,
-                        print_on=True,
-                        is_from_web=True
+                        config_file="config_test.ini"
                     )
+                                        
+                    LOGGER.info("Starting running samples with parameters: " + str(tool_scdg.config))
+                                        
+                    tool_scdg.config.set('explorer_arg', 'max_simul_state', str(active_stash))
+                    tool_scdg.config.set('explorer_arg', 'timeout',str(time))
+                    tool_scdg.config.set('explorer_arg', 'max_step',str(steps))
+                    tool_scdg.config.set('SCDG_arg',     'expl_method',exploration_tech)
                     
-                    args_parser = ArgumentParserSCDG(tool_scdg)
-                    exp_args = ["/app/src/SemaSCDG/tests/compiled_binaries/"]
-                    args = args_parser.parse_arguments(args_list=exp_args,allow_unk=True)
-                    args_parser.update_tool(args)
+                    tool_scdg.config.set('SCDG_arg',     'binary_path',"tests/compiled_binaries/"+folder+"/"+file)
+                    tool_scdg.config.set('SCDG_arg',     'exp_dir',     file)
+                    tool_scdg.config.set('SCDG_arg',     'family',      folder)
+
+                    with open("config_test.ini", 'w') as configfile:
+                        tool_scdg.config.write(configfile)
                     
-                    LOGGER.info("Starting running samples with parameters: " + str(args))
+                    tool_scdg.get_config_param(tool_scdg.config)
                     
-                    args.exp_dir = args.exp_dir.replace("unknown/","") # TODO maybe remove
-                    tool_scdg.current_exp_dir = len(glob.glob("/app/src/" + args.exp_dir + "/*")) + 1
-                    args.exp_dir              = "/app/src/" + args.exp_dir + str(tool_scdg.current_exp_dir) + "/unknown/" 
-                    args.dir                  = "/app/src/" + args.dir + str(tool_scdg.current_exp_dir) + "/"
-                    args.binaries             = args.exp_dir
-                    args.json                 = True
-                    args.track_command        = True
-                    args.ioc_report           = True
-                    args.count_block          = True
-                    tool_scdg.expl_method     = exploration_tech
-                    tool_scdg.max_simul_state = active_stash
-                    tool_scdg.timeout         = time
-                    tool_scdg.max_steps       = steps
-                    tool_scdg.inputs          = "/app/src/SemaSCDG/tests/compiled_binaries/"
+                    LOGGER.info("Starting running samples with parameters:" + str(tool_scdg.config))
                     
-                    LOGGER.info("Starting running samples with parameters:" + str(args))
+                    tool_scdg.start_scdg()
                     
-                    tool_scdg.start_scdg(args)
+                    # TODO should be in init_test_linux.py, we should run the based exploration technique from Charles-Henri and check that thre refactor ones are still correct 
+                    if False:
+                        expected_linux_folder_simprocedure = "/sema-scdg/application/tests/expected_output/"+folder+"/simprocedure/"
+                        if not os.path.exists(expected_linux_folder_simprocedure):
+                            # Copy recursively all the simprocedures from src/SemaSCDG/procedures/linux/custom_package to expected output/simprocedures
+                            os.makedirs(expected_linux_folder_simprocedure)
+                            for foldername, subfolders, filenames in os.walk("/sema-scdg/application/procedures/"+folder+"/custom_package"):
+                                for filename in filenames:
+                                    src_file  = os.path.join(foldername, filename)
+                                    dest_file = os.path.join(expected_linux_folder_simprocedure, filename)
+                                    shutil.copy2(src_file, dest_file)
+                                    LOGGER.info(f"Copied: {src_file} to {dest_file}")
+                                
+                        # Copy file to expected output(TODO)
+                        # Create the destination folder if it doesn't exist
+                        if not os.path.exists(expected_linux_folder):
+                            LOGGER.info("Create folder: " + expected_linux_folder)
+                            os.makedirs(expected_linux_folder)
+                        else:
+                            LOGGER.info("Remove folder: " + expected_linux_folder)
+                            shutil.rmtree(expected_linux_folder)
+                            LOGGER.info("Create folder: " + expected_linux_folder)
+                            os.makedirs(expected_linux_folder)
+
+                        # Walk through the source folder recursively
+                        LOGGER.info("Copy files from: " + args.exp_dir + "/"+file+"/")
+                        for foldername, subfolders, filenames in os.walk(args.exp_dir + "/"+file+"/"):
+                            for filename in filenames:
+                                # Create the full path for the source and destination files
+                                src_file  = os.path.join(foldername, filename)
+                                dest_file = os.path.join(expected_linux_folder, os.path.relpath(src_file, args.exp_dir + "/"+file+"/"))
+
+                                # Copy the file
+                                shutil.copy2(src_file, dest_file)
+                                LOGGER.info(f"Copied: {src_file} to {dest_file}")
                     
-                    expected_linux_folder = "/app/src/SemaSCDG/tests/expected_output/linux/to_test_" + \
+                    
+                    expected_linux_folder = "/sema-scdg/application/tests/expected_output/" + folder + "/"+ file+ "_" + \
                         exploration_tech + \
                         "_" + str(active_stash) + \
                         "_" + str(time) + \
@@ -285,7 +349,7 @@ class TestLinuxMethods(unittest.TestCase):
                     expected_linux_outputs = expected_linux_folder + "/inter_SCDG.json"
                                         
                     # TODO adapt if new binaries to tests
-                    current_linux_outputs = args.exp_dir + "/to_test/inter_SCDG.json"
+                    current_linux_outputs = "/sema-scdg/application/database/SCDG/runs/" + tool_scdg.config["SCDG_arg"]["exp_dir"]  + "/"+ folder +"/"+ file +"/inter_SCDG.json"
                     
                     LOGGER.info("Expected output: " + expected_linux_outputs)
                     LOGGER.info("Current output : " + current_linux_outputs)
@@ -293,9 +357,20 @@ class TestLinuxMethods(unittest.TestCase):
                     LOGGER.info("Check unique trace: ")
                     unique_traces         = remove_duplicates_traces(expected_linux_outputs)
                     current_unique_traces = remove_duplicates_traces(current_linux_outputs)
-                    for i, (trace1, trace2) in enumerate(zip_longest(unique_traces[0], current_unique_traces[0], fillvalue={})):
-                        with self.subTest(msg=f"Trace {i}"):
-                            self.assertTracesEqual(unique_traces[0][trace1], unique_traces[0][trace2])
+                    for i, (trace1, trace2) in enumerate(zip_longest(unique_traces[0], current_unique_traces[0], fillvalue=None)):
+                        if trace1 and "sections" in trace1:
+                            LOGGER.info("Sections are not compared")
+                            continue
+                        with self.subTest(msg=file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - Trace Unique {i}"):
+                            self.assertTracesEqual(unique_traces[0][trace1], unique_traces[0][trace2], file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - ")
                     
                     LOGGER.info("Check trace: ")
                     with open(expected_linux_outputs) as json_file:
@@ -303,15 +378,26 @@ class TestLinuxMethods(unittest.TestCase):
                     with open(current_linux_outputs) as json_file:
                         current_unique_traces = json.load(json_file)
                     
-                    for i, (trace1, trace2) in enumerate(zip_longest(unique_traces[0], current_unique_traces[0], fillvalue={})):
-                        with self.subTest(msg=f"Trace {i}"):
-                            self.assertTracesEqual(unique_traces[0][trace1], unique_traces[0][trace2])
+                    for i, (trace1, trace2) in enumerate(zip_longest(unique_traces[0], current_unique_traces[0], fillvalue=None)):
+                        if trace1 and "sections" in trace1:
+                            LOGGER.info("Sections are not compared")
+                            continue
+                        with self.subTest(msg=file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - Trace {i}"):
+                            self.assertTracesEqual(unique_traces[0][trace1], unique_traces[0][trace2], file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - ")
                     
                     LOGGER.info("Check json SCDG: ")
-                    expected_linux_outputs = expected_linux_folder + "/to_test.json"
+                    expected_linux_outputs = expected_linux_folder + "/"+ file  +".json"
                     
                     # TODO adapt if new binaries to tests
-                    current_linux_outputs = args.exp_dir + "/to_test/to_test.json"
+                    current_linux_outputs = "/sema-scdg/application/database/SCDG/runs/" + tool_scdg.config["SCDG_arg"]["exp_dir"] + "/" + folder + "/"+ file + "/final_SCDG.json"
                     
                     LOGGER.info("Expected output: " + expected_linux_outputs)
                     LOGGER.info("Current output : " + current_linux_outputs)
@@ -322,22 +408,30 @@ class TestLinuxMethods(unittest.TestCase):
                         current_unique_traces = json.load(json_file)
                     
                     result, mapping = compare_graphs_json(unique_traces, current_unique_traces, expected_linux_outputs, current_linux_outputs)
-                    with self.subTest(msg="Graph - status"):
-                        self.assertTrue(result)
+                    with self.subTest(msg=file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - Graph JSON - status"):
+                        self.assertTrue(result, msg="Should be true but the mapping is: " + str(mapping))
                         LOGGER.info(mapping)
                           
                     LOGGER.info("Check GV SCDG: ")
-                    expected_linux_outputs = expected_linux_folder + "/to_test.gv"
+                    expected_linux_outputs = expected_linux_folder + "/"+ file  +".gv"
                     
                     # TODO adapt if new binaries to tests
-                    current_linux_outputs = args.exp_dir + "/to_test/to_test.gv"
+                    current_linux_outputs  = "/sema-scdg/application/database/SCDG/runs/" + tool_scdg.config["SCDG_arg"]["exp_dir"] + "/" + folder + "/"+ file + "/final_SCDG.gv"
                     
                     LOGGER.info("Expected output: " + expected_linux_outputs)
                     LOGGER.info("Current output : " + current_linux_outputs)
                 
                     result, mapping = compare_graphs(expected_linux_outputs, current_linux_outputs)
-                    with self.subTest(msg="Graph - status"):
-                        self.assertTrue(result)
+                    with self.subTest(msg=file + "_" + \
+                                                exploration_tech + \
+                                                "_" + str(active_stash) + \
+                                                "_" + str(time) + \
+                                                "_" + str(steps) + " - Graph GV - status"):
+                        self.assertTrue(result, msg="Should be true but the mapping is: " + str(mapping))
                         LOGGER.info(mapping)
                         
                     # TODO SAMY compare scdg between json and gv ?
@@ -350,8 +444,37 @@ def suite():
     return test_suite
 
 if __name__ == '__main__':
-    # os.chdir("/app/src/SemaSCDG/")
-    unittest.TextTestRunner().run(suite())
+    # os.chdir("/sema-scdg/application/")
+    cov = coverage.Coverage(source=["/sema-scdg/application/"])
+    cov.start()
+    #TODO manon test classic sans rapport (parametriser ?)
+    # unittest.TextTestRunner(verbosity=2).run(suite())
+    
+     # https://ravikiranb36.github.io/htmltestrunner-rv.github.io/api-documentation/
+    runner = HTMLTestRunner(
+                log=True, verbosity=2, 
+                output='/sema-scdg/application/tests/reports/tests_reports/', 
+                title='linux_test_result', 
+                report_name='Linux test report',
+                open_in_browser=False,
+                description="/", 
+                tested_by="ElNiak",
+                add_traceback=True)
+    runner.run(suite())
+    
+    all_objects = muppy.get_objects()
+    LOGGER.info(len(all_objects))
+    sum1 = summary.summarize(all_objects)
+    summary.print_(sum1,limit=150)
+    
+    tr = tracker.SummaryTracker()
+    tr.print_diff() 
+    
+    cov.stop()
+    cov.save()
+    cov.html_report(directory="/sema-scdg/application/tests/reports/code_coverage/")
+    
+    
     # os.chdir(os.getcwd()+"/tests")
     # os.system("make clean")
     # os.chdir(os.getcwd())

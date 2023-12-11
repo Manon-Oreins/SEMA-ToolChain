@@ -33,4 +33,10 @@ libvirt-python
 unipacker
 minidump==0.0.10
 flask 
+parameterized
+networkx
+htmltestrunner-rv
+pydot
+coverage
+pympler
 #yara-python

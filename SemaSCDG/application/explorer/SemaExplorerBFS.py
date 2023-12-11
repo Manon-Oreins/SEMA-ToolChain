@@ -13,14 +13,16 @@ class SemaExplorerBFS(SemaExplorer):
         exp_dir,
         nameFileShort,
         scdg_graph,
-        call_sim
+        call_sim,
+        config_file="config.ini"
     ):
         super(SemaExplorerBFS, self).__init__(
             simgr,
             exp_dir,
             nameFileShort,
             scdg_graph,
-            call_sim
+            call_sim,
+            config_file
         )
         self.config_logger()
 

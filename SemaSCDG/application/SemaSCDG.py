@@ -57,7 +57,7 @@ class SemaSCDG():
         self.families = []
         self.nb_exps = 0
         self.current_exps = 0
-        self.current_exp_dir = 0
+        self.current_exp_dir = 0 # TODO manon is it useful ?
 
         self.windows_simproc = WindowsSimProcedure(verbose=True)
         self.linux_simproc = LinuxSimProcedure(verbose=True)
@@ -324,11 +324,15 @@ class SemaSCDG():
         #Set log handler
         fileHandler = logging.FileHandler(exp_dir + self.nameFileShort + "/" + "scdg.ans")
         fileHandler.setFormatter(CustomFormatter())
-        try:
-            logging.getLogger().removeHandler(fileHandler)
-        except:
-            self.log.warning("Exception remove filehandler")
-            pass
+        for logger_name in logging.Logger.manager.loggerDict:
+            # logging.getLogger().handlers.clear()
+            try:
+                logging.getLogger(logger_name).removeHandler(fileHandler)
+            except:
+                self.log.info("Exeption remove filehandle")
+                pass
+            
+            logging.getLogger(logger_name).addHandler(fileHandler)
         
         logging.getLogger().addHandler(fileHandler)
 

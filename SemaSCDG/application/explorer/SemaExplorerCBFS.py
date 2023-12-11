@@ -13,14 +13,16 @@ class SemaExplorerCBFS(SemaExplorer):
         exp_dir,
         nameFileShort,
         scdg_graph,
-        call_sim
+        call_sim,
+        config_file="config.ini"
     ):
         super(SemaExplorerCBFS, self).__init__(
             simgr,
             exp_dir,
             nameFileShort,
             scdg_graph,
-            call_sim
+            call_sim,
+            config_file
         )
         self.new_addr_stash = "new_addr"
         self.config_logger()

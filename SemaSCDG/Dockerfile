@@ -68,8 +68,13 @@ RUN cd /tmp/guac-build; \
 RUN ldconfig
 RUN /etc/init.d/guacd start
 
+RUN dpkg --add-architecture i386; apt-get update; apt install -y libssl-dev:i386 gcc-multilib
+
 
 COPY ./SemaSCDG/requirements.txt /sema-scdg/requirements.txt
-RUN pip3 install -r /sema-scdg/requirements.txt
+RUN su; pip3 install -r /sema-scdg/requirements.txt
+
+# Copy penv-fix files
+COPY ./SemaSCDG/penv-fix/HTMLTestRunner/runner.py /usr/local/lib/python3.8/dist-packages/HTMLTestRunner/runner.py
 
 WORKDIR /sema-scdg/application/
