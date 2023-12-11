@@ -5,7 +5,6 @@ import configparser
 from SCDGHelper.ArgumentParserSCDG import ArgumentParserSCDG
 from SemaSCDG import SemaSCDG
 
-
 app = Flask(__name__)
 app.debug = True
 

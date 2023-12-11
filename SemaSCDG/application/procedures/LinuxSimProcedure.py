@@ -4,18 +4,18 @@ from clogging.CustomFormatter import CustomFormatter
 from CustomSimProcedure import CustomSimProcedure
 from angr.calling_conventions import  SimCCSystemVAMD64
 
-logger = logging.getLogger("LinuxSimProcedure")
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-ch.setFormatter(CustomFormatter())
-logger.addHandler(ch)
-logger.propagate = False
-logger.setLevel(logging.INFO)
 
 class LinuxSimProcedure(CustomSimProcedure):
 
     def __init__(self):
         super().__init__()
+        self.log = logging.getLogger("LinuxSimProcedure")
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(CustomFormatter())
+        self.log.addHandler(ch)
+        self.log.propagate = False
+        self.log.setLevel(logging.INFO)
         self.init_sim_proc("linux")
 
     def deal_with_alt_names(self, pkg_name, proc):

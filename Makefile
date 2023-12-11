@@ -6,7 +6,8 @@ build-web-app:
 	docker build --rm --cache-from sema-web-app:latest -t sema-web-app  -f SemaWebApp/Dockerfile .
 
 build-scdg:
-	docker build --rm --cache-from sema-scdg:latest -t sema-scdg -f SemaSCDG/Dockerfile .			   
+	# Setting network to host avoid eventual dns problems
+	docker build --network=host  --rm --cache-from sema-scdg:latest -t sema-scdg -f SemaSCDG/Dockerfile .			   
 
 run-web-app-service:
 	docker run \
@@ -42,7 +43,6 @@ run-scdg-test:
 		-v $(PWD)/submodules/bingraphvis:/sema-scdg/application/submodules/bingraphvis \
 		-v $(PWD)/penv-fix/:/sema-scdg/application/penv-fix \
 		-v $(PWD)/database/:/sema-scdg/application/database\
-		-v $(PWD)/run_test.sh:/sema-scdg/application/run_test.sh \
 		-e DISPLAY=$(DISPLAY) \
 		-v /tmp/.X11-unix:/tmp/.X11-unix \
 		--net=micro_network\

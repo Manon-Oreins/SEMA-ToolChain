@@ -15,14 +15,16 @@ class SemaExplorerDFS(SemaExplorer):
         exp_dir,
         nameFileShort,
         scdg_graph,
-        call_sim
+        call_sim,
+        config_file
     ):
         super(SemaExplorerDFS, self).__init__(
             simgr,
             exp_dir,
             nameFileShort,
             scdg_graph,
-            call_sim
+            call_sim,
+            config_file
         )
         self.log = logging.getLogger("SemaExplorerDFS")
         self.log.setLevel("INFO")
