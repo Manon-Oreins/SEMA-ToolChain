@@ -54,7 +54,20 @@ run-scdg-service-pypy:
 		--name="sema-scdg-pypy" \
 		-it sema-scdg-pypy bash
 
-# TODO better i think
+run-scdg-test:	
+	docker run \
+		--rm -i\
+		-v $(PWD)/SemaSCDG/:/sema-scdg \
+		-v $(PWD)/submodules/angr-utils:/sema-scdg/application/submodules/angr-utils \
+		-v $(PWD)/submodules/bingraphvis:/sema-scdg/application/submodules/bingraphvis \
+		-v $(PWD)/penv-fix/:/sema-scdg/application/penv-fix \
+		-v $(PWD)/database/:/sema-scdg/application/database\
+		-e DISPLAY=$(DISPLAY) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		--net=micro_network\
+		--name="sema-scdg" \
+		sema-scdg bash run_test.sh
+
 run-toolchain-compose:
 	DOCKER_BUILDKIT=0 docker compose -f docker-compose.deploy.yml up
 
@@ -101,3 +114,8 @@ clean-scdg-empty-directory:
 	sudo rm -r -f SemaSCDG/application/penv-fix
 	sudo rm -r -f SemaSCDG/application/database
 	sudo rm -r -f SemaSCDG/application/logs
+
+clean-docker:
+	docker image prune
+	docker image prune -a
+	docker rmi $(docker images -a -q) 
