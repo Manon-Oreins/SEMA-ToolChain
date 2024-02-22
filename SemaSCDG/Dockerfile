@@ -77,4 +77,7 @@ RUN su; pip3 install -r /sema-scdg/requirements.txt
 # Copy penv-fix files
 COPY ./SemaSCDG/penv-fix/HTMLTestRunner/runner.py /usr/local/lib/python3.8/dist-packages/HTMLTestRunner/runner.py
 
+# Copy penv-fix files
+COPY ./SemaSCDG/penv-fix/HTMLTestRunner/runner.py /usr/local/lib/python3.8/dist-packages/HTMLTestRunner/runner.py
+
 WORKDIR /sema-scdg/application/
