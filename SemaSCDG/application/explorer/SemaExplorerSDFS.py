@@ -14,7 +14,6 @@ class SemaExplorerSDFS(SemaExplorer):
         scdg_graph,
         call_sim,
         proj,
-        config_file="config.ini",
         find = 0
     ):
         super(SemaExplorerSDFS, self).__init__(
@@ -22,8 +21,7 @@ class SemaExplorerSDFS(SemaExplorer):
             exp_dir,
             nameFileShort,
             scdg_graph,
-            call_sim,
-            config_file
+            call_sim
         )
         self.proj = proj
         self.find = find

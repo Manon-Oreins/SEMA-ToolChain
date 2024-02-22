@@ -324,15 +324,11 @@ class SemaSCDG():
         #Set log handler
         fileHandler = logging.FileHandler(exp_dir + self.nameFileShort + "/" + "scdg.ans")
         fileHandler.setFormatter(CustomFormatter())
-        for logger_name in logging.Logger.manager.loggerDict:
-            # logging.getLogger().handlers.clear()
-            try:
-                logging.getLogger(logger_name).removeHandler(fileHandler)
-            except:
-                self.log.info("Exeption remove filehandle")
-                pass
-            
-            logging.getLogger(logger_name).addHandler(fileHandler)
+        try:
+            logging.getLogger().removeHandler(fileHandler)
+        except:
+            self.log.info("Exeption remove filehandle")
+            pass
         
         logging.getLogger().addHandler(fileHandler)
 

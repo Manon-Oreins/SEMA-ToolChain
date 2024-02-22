@@ -12,16 +12,14 @@ class SemaExplorerDFS(SemaExplorer):
         exp_dir,
         nameFileShort,
         scdg_graph,
-        call_sim,
-        config_file
+        call_sim
     ):
         super(SemaExplorerDFS, self).__init__(
             simgr,
             exp_dir,
             nameFileShort,
             scdg_graph,
-            call_sim,
-            config_file
+            call_sim
         )
         self.config_logger()
 
